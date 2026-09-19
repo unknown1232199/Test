@@ -1362,4 +1362,80 @@ class Paths
 		return dirs.map(dir -> dir.substr(dir.lastIndexOf("/") + 1));
 		#end
 	}
+public static function getModStateScripts(folderName:String):Array<String>
+	{
+		var scripts:Array<String> = [];
+		var processedPaths:Map<String, Bool> = new Map();
+		
+		if (folderName == null || (folderName != "state" && folderName != "substate" && folderName != "states" && folderName != "substates"))
+			return scripts;
+		
+		var folderVariants:Array<String> = [];
+		if (folderName == "state" || folderName == "states")
+			folderVariants = ["scripts/states/", "scripts/state/"];
+		else if (folderName == "substate" || folderName == "substates")
+			folderVariants = ["scripts/substates/", "scripts/substate/"];
+		
+		if (Mods.currentModDirectory != null && Mods.currentModDirectory.length > 0)
+		{
+			for (variant in folderVariants)
+			{
+				var currentModScriptsPath:String = mods(Mods.currentModDirectory + '/' + variant);
+				if (safeModPathExists(currentModScriptsPath) && safeModIsDirectory(currentModScriptsPath))
+				{
+					var modScripts:Array<String> = safeReadDirectory(currentModScriptsPath);
+					for (file in modScripts)
+					{
+						if ((file.endsWith('.hx') || file.endsWith('.hscript')) && !processedPaths.exists(file))
+						{
+							var fullPath:String = currentModScriptsPath + file;
+							scripts.push(fullPath);
+							processedPaths.set(file, true);
+						}
+					}
+				}
+			}
+		}
+		
+		for (globalMod in Mods.getGlobalMods())
+		{
+			for (variant in folderVariants)
+			{
+				var globalModScriptsPath:String = mods(globalMod + '/' + variant);
+				if (safeModPathExists(globalModScriptsPath) && safeModIsDirectory(globalModScriptsPath))
+				{
+					var globalScripts:Array<String> = safeReadDirectory(globalModScriptsPath);
+					for (file in globalScripts)
+					{
+						if ((file.endsWith('.hx') || file.endsWith('.hscript')) && !processedPaths.exists(file))
+						{
+							var fullPath:String = globalModScriptsPath + file;
+							scripts.push(fullPath);
+							processedPaths.set(file, true);
+						}
+					}
+				}
+			}
+		}
+		
+		for (variant in folderVariants)
+		{
+			var rootModsScriptsPath:String = mods(variant);
+			if (safeModPathExists(rootModsScriptsPath) && safeModIsDirectory(rootModsScriptsPath))
+			{
+				var rootScripts:Array<String> = safeReadDirectory(rootModsScriptsPath);
+				for (file in rootScripts)
+				{
+					if ((file.endsWith('.hx') || file.endsWith('.hscript')) && !processedPaths.exists(file))
+					{
+						var fullPath:String = rootModsScriptsPath + file;
+						scripts.push(fullPath);
+						processedPaths.set(file, true);
+					}
+				}
+			}
+		}
+		
+		return scripts;
+	}
 }
